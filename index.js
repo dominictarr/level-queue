@@ -2,7 +2,6 @@
 LevelUp Queue.
 **/
 
-var through   = require('through')
 var timestamp = require('monotonic-timestamp')
 var hooks     = require('level-hooks')
 
