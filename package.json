@@ -1,0 +1,22 @@
+{
+  "name": "level-queue",
+  "version": "0.0.0",
+  "homepage": "https://github.com/dominictarr/level-queue",
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/dominictarr/level-queue.git"
+  },
+  "dependencies": {
+    "through": "~1.1.2",
+    "levelup": "~0.3.1",
+    "monotonic-timestamp": "0.0.7",
+    "level-hooks": "~1.0.0",
+    "optimist": "~0.3.5"
+  },
+  "devDependencies": {},
+  "scripts": {
+    "test": "set -e; for t in test/*.js; do node $t; done"
+  },
+  "author": "'Dominic Tarr' <dominic.tarr@gmail.com> (http://dominictarr.com)",
+  "license": "MIT"
+}
