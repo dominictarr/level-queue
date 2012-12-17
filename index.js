@@ -4,10 +4,11 @@ LevelUp Queue.
 
 var timestamp = require('monotonic-timestamp')
 var hooks     = require('level-hooks')
+var hash      = require('sha1sum')
 
 module.exports = function (prefix, work) {
 
-  return function (db) {
+  return function (db, delay) {
 
     if(db.queue) {
       for(var job in work) {
@@ -16,7 +17,7 @@ module.exports = function (prefix, work) {
       return
     }
 
-    var jobs = [], active = {}, batch = []
+    var jobs = [], pending = {}, batch = []
 
     if('string' !== typeof prefix)
       work = prefix, prefix = '~queue'
@@ -44,20 +45,20 @@ module.exports = function (prefix, work) {
       db.emit('queue:'+name+':'+a, b)
     }
 
-    function onJob (data) {
+    function onJob (data, recover) {
       //KEY should be VALUE
       var value = ''+data.value
       var ary = (''+data.key).split('~')
       var t   = ary.pop()
       var job = ary.pop()
-      emit('recover', job, value)
+      if(recover) emit('recover', job, value)
       start(job, t, value)
     }
 
     //read any jobs left from last run.
     db.readStream({start: prefix , end: prefix+'~~'})
       .on('data', function (data) {
-        count=true; onJob(data)
+        count=true; onJob(data, true)
       })
       .on('end', function () {
         //emit drain if there was no data.
@@ -78,33 +79,47 @@ module.exports = function (prefix, work) {
     }
 
     function start (job, ts, value) {
-      inProgress ++
-      var n = 1
-      function done () {
-        if(--n) return
-        db.del(toKey(job, ts), function () {
-          inProgress --
-          try {
-            db.emit('queue:done', job, value)
-            db.emit('queue:done:'+job, value)
-          } finally {
-            if(!inProgress)
-              db.emit('queue:drain')
-          }
-        })
+      if('function' !== typeof work[job]) {
+        //log this error, but don't need to fail,
+        //run this job next time.
+        return (
+            console.error || console.log
+          )('level-queue has no work function for job:'+job)
       }
-
-      if('function' === typeof work[job])
+      inProgress ++
+      setTimeout(function () {
+        delete pending[hash(job+':'+value)]
+        var n = 1
+        function done () {
+          if(--n) return
+          db.del(toKey(job, ts), function () {
+            inProgress --
+            try {
+              db.emit('queue:done', job, value)
+              db.emit('queue:done:'+job, value)
+            } finally {
+              if(!inProgress)
+                db.emit('queue:drain')
+            }
+          })
+      
+        }
+        db.emit('queue:start', job, value, done)
+        //you should probably just use this pattern...
+        db.emit('queue:start:'+job, value, done)
         work[job](value, done)
 
-      db.emit('queue:start', job, value, done)
-      //you should probably just use this pattern...
-      db.emit('queue:start:'+job, value, done)
+      }, db.queue.delay)
+
     }
 
     function queue (job, value, put) {
       var ts = timestamp()
       var key = toKey(job, ts)
+
+      var id = hash(job+':'+value)
+      if(pending[id]) return {} //this will make batch not break.
+      pending[id] = Date.now()
 
       if(put === false) {
         //return the job to be queued, to include it in a batch insert.
@@ -125,6 +140,7 @@ module.exports = function (prefix, work) {
     }
 
     db.queue = queue
+    db.queue.delay = delay || 1000
 
     for(var job in work)
       db.queue.add(job, work[job])
