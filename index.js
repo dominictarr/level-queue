@@ -112,13 +112,14 @@ module.exports = function (prefix, work) {
       }, db.queue.delay)
 
     }
+    //put=false means return a job to be queued
 
     function queue (job, value, put) {
       var ts = timestamp()
       var key = toKey(job, ts)
 
       var id = hash(job+':'+value)
-      if(pending[id]) return {} //this will make batch not break.
+      if(pending[id]) return null //this job is already queued.
       pending[id] = Date.now()
 
       if(put === false) {
