@@ -2,14 +2,18 @@
 
 queue plugin for leveldb.
 
-This module can be used to add job queues to leveldb,
-and is especially useful if used with [level-hooks](https://github.com/dominictarr/level-hooks)
+## Deprecated
+
+Use [level-trigger](https://github.com/level-trigger) instead.
 
 ## Stability
 
 Deprecated: Expect no more changes. Avoid using this module.
 
 ## Example
+
+This module can be used to add job queues to leveldb,
+and is especially useful if used with [level-hooks](https://github.com/dominictarr/level-hooks)
 
 ``` js
 var levelup = require('levelup')
