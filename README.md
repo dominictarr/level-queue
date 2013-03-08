@@ -5,6 +5,10 @@ queue plugin for leveldb.
 This module can be used to add job queues to leveldb,
 and is especially useful if used with [level-hooks](https://github.com/dominictarr/level-hooks)
 
+## Stability
+
+Deprecated: Expect no more changes. Avoid using this module.
+
 ## Example
 
 ``` js
