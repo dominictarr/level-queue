@@ -4,7 +4,7 @@ queue plugin for leveldb.
 
 ## Deprecated
 
-Use [level-trigger](https://github.com/level-trigger) instead.
+Use [level-trigger](https://github.com/dominictarr/level-trigger) instead.
 
 ## Stability
 
